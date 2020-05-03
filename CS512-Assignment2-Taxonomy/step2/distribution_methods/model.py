@@ -22,9 +22,15 @@ def invCL(x_row, y_row):
     Returns:
         float. Estimation of distributional inclusion.
     """
-    
+    y_row = y_row.ravel()
+    x_row = x_row.ravel()
+    a = clarkeDE(x_row, y_row)[0]
+    b = clarkeDE(y_row, x_row)[0]
+    val = a*(1-b)
+
+
     ### YOUR CODE HERE
-    return 
+    return (val**0.5, 0)
     ### END YOUR CODE
 
 
@@ -40,9 +46,21 @@ def clarkeDE(x_row, y_row):
     """
 
     ### YOUR CODE HERE
-    numerator = 
-    denominator = 
-    return numerator / (denominator + 1e-12)
+    summ = 0
+    summ2 = 0
+    y_row = y_row.ravel()
+    x_row = x_row.ravel()
+    for i in range(x_row.shape[0]):
+        summ2 = summ2 + x_row[i]
+        if(x_row[i] > y_row[i]):
+            summ = summ + y_row[i]
+        else:
+            summ = summ + x_row[i]
+
+    denominator = summ2
+
+
+    return (summ / (denominator + 1e-12),0)
     ### END CODE HERE
 
 
@@ -56,15 +74,26 @@ def weeds_prec(x_row, y_row):
     Returns:
         float. Estimation of distributional inclusion.
     """
+    summ = 0
+    summ2 = 0
+    y_row = y_row.ravel()
+    x_row = x_row.ravel()
+    for i in range(y_row.shape[0]):
+        summ2 = summ2 + x_row[i]
+        if(y_row[i] != 0 ):
+            summ = summ + x_row[i]
+
     # HINT: Get the mutual contexts: use y as a binary vector and apply dot product
     # with x: If c is a mutual context, it is 1 in y_non_zero and the value
     # ppmi(x, c) is added to the sum Otherwise, if it is 0 in either x or y, it
     # adds 0 to the sum.
 
     ### YOUR CODE HERE
-    numerator =
-    denominator = 
-    return numerator / (denominator + 1e-12)
+    numerator = summ
+    denominator = summ2
+    A = []
+    A.append(numerator / (denominator + 1e-12))
+    return A
     ### END CODE HERE
 
 def mdot(x_row, y_row):

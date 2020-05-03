@@ -3,9 +3,11 @@ I provide some utility code, you can choose to use them or not, as long as you c
 """
 
 import argparse
-from collections import defaultdict, Counter
-from tqdm import tqdm
+from collections import Counter, defaultdict
+
 from pattern_matcher.hearstPatterns import HearstPatterns
+from tqdm import tqdm
+
 # from flashtext import KeywordProcessor
 
 
@@ -64,24 +66,101 @@ def save_results(file_path, hypernyms, entityID2entityPreferredName):
             fout.write(f"{parentID}\t{parentName}\t{childID}\t{childName}\t{EvidentalSentIDs}\n")
 
 
+def createUpdatedFile(entityID2entityPreferredName, sentID2sentence ):
+    file_Path = "../raw_data/updated_sentences.txt" 
+    count = 0
+    entityDic = {}
+    preferredName2entityID = {}
+
+    for entitiID in entityID2entityPreferredName:
+         preferredName2entityID[entityID2entityPreferredName[entitiID]] = entitiID
+
+
+    # if "rfid technology" in preferredName2entityID:
+    #     print("YES rfid technology")
+
+    # if "rfid_technology" in preferredName2entityID:
+    #     print("YES rfid_technology")
+
+    # if "rfid" in preferredName2entityID:
+    #     print("YES rfid")
+
+    # return
+    for entiID in entityID2entityPreferredName:
+        origEntiti = entityID2entityPreferredName[entiID]
+        entiti = origEntiti.replace("_", " ")
+        if(entiti[0]!= ' '):
+            entiti = " " + entiti
+        if(entiti[-1]!= ' '):
+            entiti = entiti + " "
+
+        entityDic[entiti] =  " NP_" + origEntiti + " "
+
+    print("Dic created")
+
+    with open(file_Path, "w") as fout:
+        for sentId in sentID2sentence:
+            count = count +1 
+            sent = sentID2sentence[sentId].lower()
+            output = " " + (sent + '.')[:-1]
+            enTList = []
+            for entiti in entityDic:                
+                if entiti in sent:
+                    enTList.append(entiti)
+                 
+            enTList.sort(key=len, reverse = True)
+
+            for entiti in enTList:
+                if entiti in output:
+                    output = output.replace(entiti, entityDic[entiti])
+
+            fout.write(f"{sentId}\t{output.strip()}\n")
+
+            if(count%1000 == 0):
+                print(count)
+            
+
+
 def main(args):
     sentences, sentID2sentence = read_sentences(args.corpus)
     entityID2entityPreferredName, entityID2AllNames = read_vocab(args.vocab)
+    # createUpdatedFile(entityID2entityPreferredName, sentID2sentence)
 
-    """
-    ### YOUR CODE HERE
-    Implement your code here ...
+    hp = HearstPatterns(spacy_model_name = "", extended = True)
+    count = 0
 
-    hypernyms = ......
+    hypernyms = {}
 
-    ### END CODE
-    """
+    preferredName2entityID = {}
+
+    for entitiID in entityID2entityPreferredName:
+        preferredName2entityID[entityID2entityPreferredName[entitiID]] = entitiID
+
+    for lineId in sentID2sentence:
+        line = sentID2sentence[lineId]
+        pairs = hp.find_hyponyms(line, needs_chunk = False)
+        if(len(pairs) > 0):
+            for pair in pairs:
+                pairKey  = ( preferredName2entityID[pair[1].replace(" ", "_")],  preferredName2entityID[pair[0].replace(" ", "_")])
+                if pairKey in hypernyms:
+                    lineDic = hypernyms[pairKey]
+                    if lineId in lineDic:
+                        lineDic[lineId] = lineDic[lineId] + 1
+                    else:
+                        lineDic[lineId] = 1
+                else:
+                    lineDic = {}
+                    lineDic[lineId] = 1
+                    hypernyms[pairKey] = lineDic
+
+
+    print("We are here")
     save_results(args.output, hypernyms, entityID2entityPreferredName)
     
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Hypernym Extraction by Pattern Matching')
-    parser.add_argument('-corpus', default="../raw_data/sentences.txt")
+    parser.add_argument('-corpus', default="../raw_data/updated_sentences.txt")
     parser.add_argument('-vocab', default="../raw_data/vocab.txt")
     parser.add_argument('-output', default="./hypernymys.txt")
     args = parser.parse_args()
