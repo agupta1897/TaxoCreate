@@ -66,7 +66,7 @@ def save_results(file_path, hypernyms, entityID2entityPreferredName):
             fout.write(f"{parentID}\t{parentName}\t{childID}\t{childName}\t{EvidentalSentIDs}\n")
 
 
-def createUpdatedFile(entityID2entityPreferredName, sentID2sentence ):
+def createUpdatedFile(entityID2entityPreferredName, entityID2AllNames, sentID2sentence ):
     file_Path = "../raw_data/updated_sentences.txt" 
     count = 0
     entityDic = {}
@@ -75,26 +75,17 @@ def createUpdatedFile(entityID2entityPreferredName, sentID2sentence ):
     for entitiID in entityID2entityPreferredName:
          preferredName2entityID[entityID2entityPreferredName[entitiID]] = entitiID
 
+    count = 0
+    for entiID in entityID2AllNames:
 
-    # if "rfid technology" in preferredName2entityID:
-    #     print("YES rfid technology")
-
-    # if "rfid_technology" in preferredName2entityID:
-    #     print("YES rfid_technology")
-
-    # if "rfid" in preferredName2entityID:
-    #     print("YES rfid")
-
-    # return
-    for entiID in entityID2entityPreferredName:
-        origEntiti = entityID2entityPreferredName[entiID]
-        entiti = origEntiti.replace("_", " ")
-        if(entiti[0]!= ' '):
-            entiti = " " + entiti
-        if(entiti[-1]!= ' '):
-            entiti = entiti + " "
-
-        entityDic[entiti] =  " NP_" + origEntiti + " "
+        allEntities = entityID2AllNames[entiID]
+        prefEntity = entityID2entityPreferredName[entiID]
+        for entiti in allEntities:
+            if(entiti[0]!= ' '):
+                entiti = " " + entiti
+            if(entiti[-1]!= ' '):
+                entiti = entiti + " "
+            entityDic[entiti] =  " NP_" + prefEntity + " "
 
     print("Dic created")
 
@@ -116,7 +107,7 @@ def createUpdatedFile(entityID2entityPreferredName, sentID2sentence ):
 
             fout.write(f"{sentId}\t{output.strip()}\n")
 
-            if(count%1000 == 0):
+            if(count%5000 == 0):
                 print(count)
             
 
@@ -124,13 +115,11 @@ def createUpdatedFile(entityID2entityPreferredName, sentID2sentence ):
 def main(args):
     sentences, sentID2sentence = read_sentences(args.corpus)
     entityID2entityPreferredName, entityID2AllNames = read_vocab(args.vocab)
-    # createUpdatedFile(entityID2entityPreferredName, sentID2sentence)
+    # createUpdatedFile(entityID2entityPreferredName, entityID2AllNames, sentID2sentence)
 
     hp = HearstPatterns(spacy_model_name = "", extended = True)
     count = 0
-
     hypernyms = {}
-
     preferredName2entityID = {}
 
     for entitiID in entityID2entityPreferredName:
