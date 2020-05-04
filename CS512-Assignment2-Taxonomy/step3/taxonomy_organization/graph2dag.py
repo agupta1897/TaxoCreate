@@ -40,17 +40,55 @@ def describe_graph(G):
 
 def NoCyc(G):
     G_copy = G.copy()
-
-    ### YOUR CODE HERE
-    # 
-    ### END YOUR CODE
+    while True:
+        try:
+            nx.find_cycle(G_copy)
+            for c in nx.strongly_connected_components(G_copy):
+                nodeList = []
+                for node in G_copy.nodes():
+                    if str(node) in c:
+                        nodeList.append(node)
+            
+                subG = G_copy.subgraph(nodeList)
+                smallestEdge = ""
+                for edge in subG.edges( data = "weight"):
+                    if (smallestEdge == "" ):
+                        smallestEdge = edge
+                    else:
+                        if(edge[2] < smallestEdge[2]):
+                            smallestEdge = edge
+                if (smallestEdge != ""): 
+                    G_copy.remove_edge(smallestEdge[0], smallestEdge[1])
+        except:
+            break
     return G_copy
+
 
 
 def DMST(G):
     G_copy = G.copy()
+    G_copy.add_node("Dummy")
+    for node in G_copy.nodes():
+        G_copy.add_edge("Dummy", node, weight = 0.1)
 
-    ### YOUR CODE HERE
-    # 
-    ### END YOUR CODE
-    return G_copy
+
+    G_nodir = G_copy.to_undirected()
+    T = nx.maximum_spanning_tree(G_nodir)
+    T_dir = T.to_directed()
+    T_dir.remove_node("Dummy")
+
+    edgeListToRemove = []
+
+
+    for edge in T_dir.edges:
+        removeEdge = True
+        for edgeG in G.edges:
+            if(str(edge[0]) == str(edgeG[0]) and str(edge[1]) == str(edgeG[1])):
+                removeEdge = False
+                break
+        if (removeEdge == True):
+            edgeListToRemove.append( (edge[0], edge[1]) )
+        
+    for edge in edgeListToRemove:
+        T_dir.remove_edge(edge[0], edge[1])
+    return T_dir

@@ -10,6 +10,7 @@ import networkx as nx
 from itertools import combinations
 from taxonomy_organization.graph2dag import *
 from distribution_methods.model import DIHModel
+from tqdm import tqdm
 
 
 def read_vocab(file_path):
@@ -123,6 +124,7 @@ with open("./cs_taxonomy.txt", "r") as fin:
             segs = line.split("\t")
             edges.append([entityName2ID[segs[0]], entityName2ID[segs[1]]])
 
+
 T_true = nx.DiGraph()
 T_true.add_edges_from(edges)
 termID_list = list(T_true.nodes())
@@ -130,6 +132,8 @@ termID_list = list(T_true.nodes())
 # construct and evaluate taxonomy
 file_out = "./final_e2e_results.tsv"
 DIH_METRIC_NAMES = ["weeds_prec", "clarkeDE", "invCL"]
+# DIH_METRIC_NAMES = ["weeds_prec"]
+
 TAXORG_METHODS = ["NoCyc", "DMST"]
 GRAPH_THRESHOLDS = [0.01]
 CONTEXT_SPACES = ["../step2/entityID2contexts.txt"]
@@ -145,6 +149,7 @@ with open(file_out, "w") as fout:
                     print(f"context_space: {context_space}")
                     print(f"dih_metric_name: {dih_metric_name}, taxorg_method: {taxorg_method}, graph_threshold: {graph_threshold}")
                     try:
+                        print(len(termID_list))
                         T_pred = construct_taxonomy(termID_list, dih_model, dih_metric_name, taxorg_method, graph_threshold, False)
                         edge_result = edge_metrics(T_true, T_pred, True)
                         ancestor_result = ancestor_metrics(T_true, T_pred, True)
